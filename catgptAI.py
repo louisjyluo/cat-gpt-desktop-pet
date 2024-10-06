@@ -13,7 +13,7 @@ CORS(app)
 # Get OpenAI API key from environment
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 api_request_counter = 0
-           
+
 class catgptAI():
     def chat(msg):
         global api_request_counter

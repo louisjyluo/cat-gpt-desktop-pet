@@ -193,7 +193,8 @@ class pet():
     def jump_right(self):
         # move right by one pixel
         self.x += 1
-        self.y = self.jump_parabola(range(self.action_time)[self.timer])
+        x_range = [*range(-1 * self.action_time / 2, self.action_time / 2)]
+        self.y = self.jump_parabola(x_range[self.timer])
         
         if self.is_at_edge_of_screen():
             self.timer = 0
@@ -227,7 +228,7 @@ class pet():
     def jump_left(self):
         # move right by one pixel
         self.x -= 1
-        x_range = [*range(self.action_time)]
+        x_range = [*range(-1 * self.action_time / 2, self.action_time / 2)]
         x_range.reverse()
         self.y = self.jump_parabola(x_range[self.timer])
         
