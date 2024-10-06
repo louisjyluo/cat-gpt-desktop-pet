@@ -40,6 +40,3 @@ class catgptAI():
         except Exception as e:
             print(f"Error: {e}")
             return "Error: Something went wrong"
-        
-response = catgptAI.chat("hello please say something cool")
-print(response)

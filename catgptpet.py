@@ -11,18 +11,15 @@ class pet():
         self.window = tk.Tk()
 
         # placeholder image
-        image = Image.open('chonk.jpg')
-        image = image.resize((200, 200))
-        image = ImageTk.PhotoImage(image)
         
-        self.walking_right = [tk.PhotoImage(image)]
+        self.walking_right = [tk.PhotoImage(file='chonk.png').subsample(20)]
         self.frame_index = 0
         self.img = self.walking_right[self.frame_index]
         self.timer = 0
-        self.action_time = random.randint(300, 800)
+        self.action_time = 730
         
         self.inputtxt = tk.Text(self.window, 
-                   height = 5, 
+                   height = 1, 
                    width = 20) 
   
         self.inputtxt.pack() 
@@ -46,8 +43,8 @@ class pet():
         self.label = tk.Label(self.window, bd=0, bg='black')
 
         # create a window of size 128x128 pixels, at coordinates 0,0
-        self.x = self.window.winfo_screenwidth() - 250
-        self.y = self.window.winfo_screenheight() - 250
+        self.x = self.window.winfo_screenwidth() - 800
+        self.y = self.window.winfo_screenheight() - 200
         self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
 
         # add the image to our label
@@ -57,17 +54,17 @@ class pet():
         self.label.pack()
 
         # run self.update() after 0ms when mainloop starts
-        self.window.after(0, self.walk_right)
+        self.window.after(0, self.jump_left)
         self.window.mainloop()
 
     def walk_right(self):
-        if self.is_at_edge_of_screen(self):
+        self.x += 1
+        if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_left)
             return 
         # move right by one pixel
-        self.x += 1
         # advance frame if 50ms have passed
         # if time.time() > self.timestamp + 0.05:
         #     self.timestamp = time.time()
@@ -92,13 +89,14 @@ class pet():
             self.window.after(10, self.walk_right)
         
     def walk_left(self):
-        if self.is_at_edge_of_screen(self):
+        self.x -= 1
+        if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_right)
             return 
         # move right by one pixel
-        self.x -= 1
+      
         # advance frame if 50ms have passed
         # if time.time() > self.timestamp + 0.05:
         #     self.timestamp = time.time()
@@ -123,13 +121,15 @@ class pet():
             self.window.after(10, self.walk_left)
             
     def walk_up(self):
-        if self.is_at_edge_of_screen(self):
+        self.y -= 1
+        
+        if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_down)
             return 
         # move right by one pixel
-        self.y -= 1
+       
         # advance frame if 50ms have passed
         # if time.time() > self.timestamp + 0.05:
         #     self.timestamp = time.time()
@@ -154,14 +154,14 @@ class pet():
             self.window.after(10, self.walk_up)
     
     def walk_down(self):
+        self.x += 1
         # move right by one pixel
-        if self.is_at_edge_of_screen(self):
+        if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_up)
             return 
-            
-        self.x += 1
+    
         # advance frame if 50ms have passed
         # if time.time() > self.timestamp + 0.05:
         #     self.timestamp = time.time()
@@ -192,14 +192,15 @@ class pet():
             
     def jump_right(self):
         # move right by one pixel
-        if self.is_at_edge_of_screen(self):
+        self.x += 1
+        self.y = self.jump_parabola(range(self.action_time)[self.timer])
+        
+        if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_left)
             return 
             
-        self.x += 1
-        self.y = self.jump_parabola(self, range(self.action_time)[self.timer])
         # advance frame if 50ms have passed
         # if time.time() > self.timestamp + 0.05:
         #     self.timestamp = time.time()
@@ -225,14 +226,17 @@ class pet():
             
     def jump_left(self):
         # move right by one pixel
-        if self.is_at_edge_of_screen(self):
+        self.x -= 1
+        x_range = [*range(self.action_time)]
+        x_range.reverse()
+        self.y = self.jump_parabola(x_range[self.timer])
+        
+        if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_right)
             return 
             
-        self.x -= 1
-        self.y = self.jump_parabola(self, range(self.action_time).reversed()[self.timer])
         # advance frame if 50ms have passed
         # if time.time() > self.timestamp + 0.05:
         #     self.timestamp = time.time()
@@ -273,21 +277,21 @@ class pet():
             self.window.after(10, self.idle)
     
     def is_at_edge_of_screen(self):
-        if(self.x == 0 or self.x + 200 == self.window.winfo_screenwidth()):
+        if(self.x <= 0 or self.x + 120 >= self.window.winfo_screenwidth()):
             return True
-        if(self.y == 0 or self.y + 200 == self.window.winfo_screenheight()):
+        if(self.y <= 0 or self.y + 40 >= self.window.winfo_screenheight()):
             return True
         return False
     
     def jump_parabola(self, x):
-        y = -0.003(x - self.x)**2 + 400 + self.y
-        return y
+        y = -0.003 * (x - self.x)**2 + 400 + self.y
+        return int(y)
     
     def on_click(self):
         x = self.window.winfo_pointerx() - self.window.winfo_rootx()
         y = self.window.winfo_pointery() - self.window.winfo_rooty()
         if self.x == x and self.y == y:
-            response = catgptAI.chat("say something cool")
-            print(response)
+            #response = catgptAI.chat("say something cool")
+            print("hi")
     
 pet()
