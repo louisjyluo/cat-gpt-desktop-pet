@@ -17,7 +17,11 @@ class pet():
         self.img = self.walking_right[self.frame_index]
         self.timer = 0
         self.action_time = 730
-        
+        self.x_range_right = [*range(-400, 400)]
+        self.x_range_left = [*range(300, 1400)]
+        self.x_range_left.reverse()
+        print(self.x_range_right)
+        print(self.x_range_left)
         self.inputtxt = tk.Text(self.window, 
                    height = 1, 
                    width = 20) 
@@ -193,8 +197,9 @@ class pet():
     def jump_right(self):
         # move right by one pixel
         self.x += 1
-        x_range = [*range(-1 * self.action_time / 2, self.action_time / 2)]
-        self.y = self.jump_parabola(x_range[self.timer])
+
+        self.y = self.jump_parabola(self.x_range_right[self.timer])
+        
         
         if self.is_at_edge_of_screen():
             self.timer = 0
@@ -228,11 +233,12 @@ class pet():
     def jump_left(self):
         # move right by one pixel
         self.x -= 1
-        x_range = [*range(-1 * self.action_time / 2, self.action_time / 2)]
-        x_range.reverse()
-        self.y = self.jump_parabola(x_range[self.timer])
+
+        self.y = self.jump_parabola(self.x_range_left[self.timer])
+        print(self.x, self.y)
         
         if self.is_at_edge_of_screen():
+            print("this ran")
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_right)
@@ -285,7 +291,7 @@ class pet():
         return False
     
     def jump_parabola(self, x):
-        y = -0.003 * (x - self.x)**2 + 400 + self.y
+        y = 0.003 * (x - 1200)**2 - 600
         return int(y)
     
     def on_click(self):
@@ -294,5 +300,5 @@ class pet():
         if self.x == x and self.y == y:
             #response = catgptAI.chat("say something cool")
             print("hi")
-    
+            
 pet()
