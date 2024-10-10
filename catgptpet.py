@@ -16,12 +16,14 @@ class pet():
         self.frame_index = 0
         self.img = self.walking_right[self.frame_index]
         self.timer = 0
-        self.action_time = 730
-        self.x_range_right = [*range(-400, 400)]
-        self.x_range_left = [*range(300, 1400)]
+        
+        self.jump_range_param = 40
+        
+        self.seed_randomizer = random.randint(0, 7)
+        self.action_time = self.jump_range_param * 2 - 1
+        self.x_range_right = [*range(-1 * self.jump_range_param, self.jump_range_param)]
+        self.x_range_left = [*range(-1 * self.jump_range_param, self.jump_range_param)]
         self.x_range_left.reverse()
-        print(self.x_range_right)
-        print(self.x_range_left)
         self.inputtxt = tk.Text(self.window, 
                    height = 1, 
                    width = 20) 
@@ -58,7 +60,7 @@ class pet():
         self.label.pack()
 
         # run self.update() after 0ms when mainloop starts
-        self.window.after(0, self.jump_left)
+        self.window.after(0, self.jump_right)
         self.window.mainloop()
 
     def walk_right(self):
@@ -84,13 +86,12 @@ class pet():
         self.label.pack()
         
         if self.timer == self.action_time:
-            self.timer = 0
-            self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_left)
+            self.next_function()
         else:
             # call update after 10ms
             self.timer += 1
             self.window.after(10, self.walk_right)
+        return
         
     def walk_left(self):
         self.x -= 1
@@ -116,13 +117,12 @@ class pet():
         self.label.pack()
         
         if self.timer == self.action_time:
-            self.timer = 0
-            self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_right)
+            self.next_function()
         else:     
             self.timer += 1
             # call update after 10ms
             self.window.after(10, self.walk_left)
+        return
             
     def walk_up(self):
         self.y -= 1
@@ -149,16 +149,15 @@ class pet():
         self.label.pack()
         
         if self.timer == self.action_time:
-            self.timer = 0
-            self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_down)
+            self.next_function()
         else:     
             self.timer += 1
             # call update after 10ms
             self.window.after(10, self.walk_up)
+        return
     
     def walk_down(self):
-        self.x += 1
+        self.y += 1
         # move right by one pixel
         if self.is_at_edge_of_screen():
             self.timer = 0
@@ -181,13 +180,12 @@ class pet():
         self.label.pack()
         
         if self.timer == self.action_time:
-            self.timer = 0
-            self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_up)
+            self.next_function()
         else:
             self.timer += 1
             # call update after 10ms
             self.window.after(10, self.walk_down)
+        return
             
     #calling jump_right:
     # self.timer = 0
@@ -196,9 +194,9 @@ class pet():
             
     def jump_right(self):
         # move right by one pixel
-        self.x += 1
+        self.x += 7
 
-        self.y = self.jump_parabola(self.x_range_right[self.timer])
+        self.y = self.y - self.jump_parabola(self.x_range_left[self.timer])
         
         
         if self.is_at_edge_of_screen():
@@ -222,23 +220,20 @@ class pet():
         self.label.pack()
         
         if self.timer == self.action_time:
-            self.timer = 0
-            self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_left)
+            self.next_function()
         else:     
             self.timer += 1
             # call update after 10ms
             self.window.after(10, self.jump_right)
+        return
             
     def jump_left(self):
         # move right by one pixel
-        self.x -= 1
+        self.x -= 7
 
-        self.y = self.jump_parabola(self.x_range_left[self.timer])
-        print(self.x, self.y)
+        self.y = self.y - self.jump_parabola(self.x_range_left[self.timer])
         
         if self.is_at_edge_of_screen():
-            print("this ran")
             self.timer = 0
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_right)
@@ -259,13 +254,12 @@ class pet():
         self.label.pack()
         
         if self.timer == self.action_time:
-            self.timer = 0
-            self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_right)
+            self.next_function()
         else:     
             self.timer += 1
             # call update after 10ms
             self.window.after(10, self.jump_left)
+        return
     
     def idle(self):
         # create the window
@@ -277,22 +271,64 @@ class pet():
         
         #idle 
         if self.timer == self.action_time:
-            self.timer = 0
-            self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_right)
+            self.next_function()
         else:
+            self.timer += 1
             self.window.after(10, self.idle)
+        return
     
     def is_at_edge_of_screen(self):
-        if(self.x <= 0 or self.x + 120 >= self.window.winfo_screenwidth()):
+        if(self.x <= 0):
+            self.x = 5
             return True
-        if(self.y <= 0 or self.y + 40 >= self.window.winfo_screenheight()):
+        if(self.x + 120 >= self.window.winfo_screenwidth()):
+            self.x = self.window.winfo_screenwidth() - 125
+            return True
+        if(self.y <= 0):
+            self.y = 5
+            return True
+        if(self.y + 80 >= self.window.winfo_screenheight()):
+            self.y = self.window.winfo_screenheight() - 85
             return True
         return False
     
     def jump_parabola(self, x):
-        y = 0.003 * (x - 1200)**2 - 600
+        y = 0.5 * x
         return int(y)
+    
+    def next_function(self):
+        self.seed_randomizer = random.randint(0,6)
+        self.timer = 0
+        print(self.seed_randomizer)
+        match self.seed_randomizer:
+            case 0: 
+                self.action_time = random.randint(300, 800)
+                self.window.after(10, self.walk_right)
+                return
+            case 1: 
+                self.action_time = random.randint(300, 800)
+                self.window.after(10, self.walk_left)
+                return
+            case 2: 
+                self.action_time = random.randint(300, 800)
+                self.window.after(10, self.walk_down)
+                return
+            case 3: 
+                self.action_time = random.randint(300, 800)
+                self.window.after(10, self.walk_up)
+                return
+            case 4: 
+                self.action_time = self.jump_range_param * 2 -1
+                self.window.after(10, self.jump_right)
+                return 
+            case 5: 
+                self.action_time = self.jump_range_param * 2 -1
+                self.window.after(10, self.jump_left)
+                return
+            case 6: 
+                self.action_time = random.randint(300, 800)
+                self.window.after(10, self.idle)
+                return
     
     def on_click(self):
         x = self.window.winfo_pointerx() - self.window.winfo_rootx()
