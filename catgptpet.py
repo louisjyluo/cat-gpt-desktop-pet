@@ -1,6 +1,5 @@
 import tkinter as tk
-from PIL import Image
-from PIL import ImageTk
+from PIL import Image, ImageTk, ImageSequence
 import time
 import random
 import catgptAI
@@ -11,24 +10,33 @@ class pet():
         self.window = tk.Tk()
 
         # placeholder image
+        idle = Image.open('latte_idle.gif')
         
-        self.walking_right = [tk.PhotoImage(file='chonk.png').subsample(20)]
+        idle_frames = []
+        ind = 0
+        for frame in ImageSequence.Iterator(idle):
+            idle.seek(ind)
+            idle_frames.append(frame.copy())
+            ind += 1
+        idle_frames.remove(idle_frames[0])
+        self.test_img = [tk.PhotoImage(file='chonk.png').subsample(20)]
+        self.ani_idle = [ImageTk.PhotoImage(i.resize((200,200))) for i in idle_frames]
         self.frame_index = 0
-        self.img = self.walking_right[self.frame_index]
+        self.img = self.ani_idle[1]
         self.timer = 0
         
         self.jump_range_param = 40
         
         self.seed_randomizer = random.randint(0, 7)
-        self.action_time = self.jump_range_param * 2 - 1
+        self.action_time = 1000
         self.x_range_right = [*range(-1 * self.jump_range_param, self.jump_range_param)]
         self.x_range_left = [*range(-1 * self.jump_range_param, self.jump_range_param)]
         self.x_range_left.reverse()
-        self.inputtxt = tk.Text(self.window, 
-                   height = 1, 
-                   width = 20) 
+        # self.inputtxt = tk.Text(self.window, 
+        #            height = 1, 
+        #            width = 20) 
   
-        self.inputtxt.pack() 
+        # self.inputtxt.pack() 
 
         # timestamp to check whether to advance frame
         self.timestamp = time.time()
@@ -50,8 +58,8 @@ class pet():
 
         # create a window of size 128x128 pixels, at coordinates 0,0
         self.x = self.window.winfo_screenwidth() - 800
-        self.y = self.window.winfo_screenheight() - 200
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.y = self.window.winfo_screenheight() - 500
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
 
         # add the image to our label
         self.label.configure(image=self.img)
@@ -60,7 +68,7 @@ class pet():
         self.label.pack()
 
         # run self.update() after 0ms when mainloop starts
-        self.window.after(0, self.jump_right)
+        self.window.after(0, self.idle)
         self.window.mainloop()
 
     def walk_right(self):
@@ -79,7 +87,7 @@ class pet():
         #     self.img = self.walking_right[self.frame_index]
 
         # create the window
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -90,7 +98,7 @@ class pet():
         else:
             # call update after 10ms
             self.timer += 1
-            self.window.after(10, self.walk_right)
+            self.window.after(10, self.walk_down)
         return
         
     def walk_left(self):
@@ -110,7 +118,7 @@ class pet():
         #     self.img = self.walking_right[self.frame_index]
 
         # create the window
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -142,7 +150,7 @@ class pet():
         #     self.img = self.walking_right[self.frame_index]
 
         # create the window
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -173,7 +181,7 @@ class pet():
         #     self.img = self.walking_right[self.frame_index]
 
         # create the window
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -213,7 +221,7 @@ class pet():
         #     self.img = self.walking_right[self.frame_index]
 
         # create the window
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -247,7 +255,7 @@ class pet():
         #     self.img = self.walking_right[self.frame_index]
 
         # create the window
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -262,8 +270,19 @@ class pet():
         return
     
     def idle(self):
+        
+        # advance frame if 50ms have passed
+        
+        
+        if time.time() > self.timestamp + 0.05:
+            self.timestamp = time.time()
+            # advance the frame by one, wrap back to 0 at the end
+            self.frame_index = (self.frame_index + 1) % 4
+            self.img = self.ani_idle[self.frame_index]
+        
+        
         # create the window
-        self.window.geometry('128x90+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -287,8 +306,8 @@ class pet():
         if(self.y <= 0):
             self.y = 5
             return True
-        if(self.y + 80 >= self.window.winfo_screenheight()):
-            self.y = self.window.winfo_screenheight() - 85
+        if(self.y + 160 >= self.window.winfo_screenheight()):
+            self.y = self.window.winfo_screenheight() - 165
             return True
         return False
     
