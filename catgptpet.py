@@ -3,6 +3,8 @@ from PIL import Image, ImageTk, ImageSequence
 import time
 import random
 import catgptAI
+import pyautogui
+from tkinter import ttk
 
 class pet():
     def __init__(self):
@@ -28,16 +30,22 @@ class pet():
         self.jump_range_param = 40
         
         self.seed_randomizer = random.randint(0, 7)
-        self.action_time = 1000
+        self.action_time = 10000
         self.x_range_right = [*range(-1 * self.jump_range_param, self.jump_range_param)]
         self.x_range_left = [*range(-1 * self.jump_range_param, self.jump_range_param)]
-        self.x_range_left.reverse()
-        # self.inputtxt = tk.Text(self.window, 
-        #            height = 1, 
-        #            width = 20) 
-  
-        # self.inputtxt.pack() 
-
+        self.x_range_left.reverse()    
+                
+        self.response_screen = tk.Label(self.window, text="", font= ('Helvetica 12'), height=0)
+        self.response_screen.pack(pady=1)
+        
+        self.input_box = tk.Entry(self.window, width=20, bd=0, bg="white", fg="black", highlightthickness = 0,
+                                    borderwidth=0, font=("Ariel", 12))
+        self.input_box.config(highlightthickness = 0, borderwidth=0)
+        self.input_box.pack()
+        
+        self.button = tk.Button(self.window, text= "Ask Me", command=self.on_click)
+        self.button.pack()
+    
         # timestamp to check whether to advance frame
         self.timestamp = time.time()
 
@@ -98,7 +106,7 @@ class pet():
         else:
             # call update after 10ms
             self.timer += 1
-            self.window.after(10, self.walk_down)
+            self.window.after(10, self.walk_right)
         return
         
     def walk_left(self):
@@ -282,7 +290,7 @@ class pet():
         
         
         # create the window
-        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.window.geometry('200x800+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
         # add the image to our label
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
@@ -297,14 +305,14 @@ class pet():
         return
     
     def is_at_edge_of_screen(self):
-        if(self.x <= 0):
-            self.x = 5
+        if(self.x <= -50):
+            self.x = -45
             return True
         if(self.x + 120 >= self.window.winfo_screenwidth()):
             self.x = self.window.winfo_screenwidth() - 125
             return True
-        if(self.y <= 0):
-            self.y = 5
+        if(self.y <= -50):
+            self.y = -45
             return True
         if(self.y + 160 >= self.window.winfo_screenheight()):
             self.y = self.window.winfo_screenheight() - 165
@@ -350,10 +358,14 @@ class pet():
                 return
     
     def on_click(self):
-        x = self.window.winfo_pointerx() - self.window.winfo_rootx()
-        y = self.window.winfo_pointery() - self.window.winfo_rooty()
-        if self.x == x and self.y == y:
-            #response = catgptAI.chat("say something cool")
-            print("hi")
-            
+        #x, y = pyautogui.position()
+        #if x >= self.x and y >= self.y and x <= self.x + 125 and y <= self.y + 165:
+            response = catgptAI.catgptAI.chat(self.input_box.get())
+            try: 
+                print(response)
+                self.window.geometry('200x800+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+                self.response_screen.config(text=response, wraplength= 180, height=6, padx=-1)
+            except:
+                print("meow")
+        #self.window.after(100, self.on_click)
 pet()
