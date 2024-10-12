@@ -11,18 +11,48 @@ class pet():
         # create a window
         self.window = tk.Tk()
 
-        # placeholder image
+        #Reading the gifs for the animation
         idle = Image.open('latte_idle.gif')
+        right = Image.open('latte_run_right.gif')     
+        left = Image.open('latte_run_left.gif')
         
+        #Creating the list of frames
         idle_frames = []
+        right_frames = []
+        left_frames = []
+        
+        #For loops used to make the list of frames per animation
+        
         ind = 0
         for frame in ImageSequence.Iterator(idle):
             idle.seek(ind)
             idle_frames.append(frame.copy())
             ind += 1
+        
+        ind = 0
+        for frame in ImageSequence.Iterator(right):
+            right.seek(ind)
+            right_frames.append(frame.copy())
+            ind += 1
+        
+        ind = 0
+        for frame in ImageSequence.Iterator(left):
+            left.seek(ind)
+            left_frames.append(frame.copy())
+            ind += 1
+        
+        #Removing the first frame which usually is a bit spotty
         idle_frames.remove(idle_frames[0])
+        left_frames.remove(left_frames[0])
+        right_frames.remove(right_frames[0])
+        
+        #Putting each frame in a list 
         self.test_img = [tk.PhotoImage(file='chonk.png').subsample(20)]
         self.ani_idle = [ImageTk.PhotoImage(i.resize((200,200))) for i in idle_frames]
+        self.ani_left = [ImageTk.PhotoImage(i.resize((200,200))) for i in left_frames]
+        self.ani_right = [ImageTk.PhotoImage(i.resize((200,200))) for i in right_frames]
+        
+        
         self.frame_index = 0
         self.img = self.ani_idle[1]
         self.timer = 0
@@ -86,13 +116,13 @@ class pet():
             self.action_time = random.randint(300, 800)
             self.window.after(10, self.walk_left)
             return 
-        # move right by one pixel
+
         # advance frame if 50ms have passed
-        # if time.time() > self.timestamp + 0.05:
-        #     self.timestamp = time.time()
-        #     # advance the frame by one, wrap back to 0 at the end
-        #     self.frame_index = (self.frame_index + 1) % 4
-        #     self.img = self.walking_right[self.frame_index]
+        if time.time() > self.timestamp + 0.05:
+            self.timestamp = time.time()
+            # advance the frame by one, wrap back to 0 at the end
+            self.frame_index = (self.frame_index + 1) % 4
+            self.img = self.ani_right[self.frame_index]
 
         # create the window
         self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
@@ -119,11 +149,11 @@ class pet():
         # move right by one pixel
       
         # advance frame if 50ms have passed
-        # if time.time() > self.timestamp + 0.05:
-        #     self.timestamp = time.time()
-        #     # advance the frame by one, wrap back to 0 at the end
-        #     self.frame_index = (self.frame_index + 1) % 4
-        #     self.img = self.walking_right[self.frame_index]
+        if time.time() > self.timestamp + 0.05:
+            self.timestamp = time.time()
+            # advance the frame by one, wrap back to 0 at the end
+            self.frame_index = (self.frame_index + 1) % 4
+            self.img = self.ani_left[self.frame_index]
 
         # create the window
         self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
