@@ -10,19 +10,19 @@ class pet():
     def __init__(self):
         # create a window
         self.window = tk.Tk()
-        self.dialog = tk.Tk()
+        self.dialog = tk.Toplevel()
 
         #Reading the gifs for the animation
         idle = Image.open('latte_idle.gif')
         right = Image.open('latte_run_right.gif')     
         left = Image.open('latte_run_left.gif')
-        yap_bubble = Image.open('speech_bubble_a.png')
+        yap_bubble = Image.open('speech_bubble.png')
         #Creating the list of frames
         idle_frames = []
         right_frames = []
         left_frames = []
         
-        yap_bubble.resize((200,200))
+        yap_bubble = yap_bubble.copy().resize((200,200))
         
         #For loops used to make the list of frames per animation
         ind = 0
@@ -90,6 +90,8 @@ class pet():
 
         # make window draw over all others
         self.window.attributes('-topmost', True)
+        
+        self.window.wm_attributes('-transparentcolor', 'black')
 
         # create a label as a container for our image
         self.label = tk.Label(self.window, bd=0, bg='black')
@@ -123,7 +125,7 @@ class pet():
         
         self.bub_label = tk.Label(self.dialog, bd=0, bg='black')
         
-        self.bub_x = self.window.winfo_screenwidth() - 800
+        self.bub_x = self.window.winfo_screenwidth() - 780
         self.bub_y = self.window.winfo_screenheight() - 600
         self.dialog.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
         
@@ -337,7 +339,8 @@ class pet():
     def idle(self):
         
         # advance frame if 50ms have passed
-        
+        self.bub_x = self.x + 20
+        self.bub_y = self.y - 100
         
         if time.time() > self.timestamp + 0.25:
             self.timestamp = time.time()
@@ -351,13 +354,14 @@ class pet():
         self.dialog.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
         # add the image to our label
         self.label.configure(image=self.img)
-        self.bub_label.configure(image=self.img)
+        self.bub_label.configure(image=self.bub_img)
         # give window to geometry manager (so it will appear)
         self.label.pack()
         self.bub_label.pack()
         
         #idle 
         if self.timer == self.action_time:
+            self.dialog.withdraw()
             self.next_function()
         else:
             self.timer += 1
@@ -368,8 +372,8 @@ class pet():
         if(self.x <= 0):
             self.x = 5
             return True
-        if(self.x + 120 >= self.window.winfo_screenwidth()):
-            self.x = self.window.winfo_screenwidth() - 125
+        if(self.x + 180 >= self.window.winfo_screenwidth()):
+            self.x = self.window.winfo_screenwidth() - 185
             return True
         if(self.y <= 0):
             self.y = 5
@@ -413,6 +417,7 @@ class pet():
                 self.window.after(10, self.jump_left)
                 return
             case 6: 
+                self.dialog.deiconify()
                 self.action_time = random.randint(300, 800)
                 self.window.after(10, self.idle)
                 return
