@@ -312,7 +312,7 @@ class pet():
         # advance frame if 50ms have passed
         
         
-        if time.time() > self.timestamp + 0.05:
+        if time.time() > self.timestamp + 0.25:
             self.timestamp = time.time()
             # advance the frame by one, wrap back to 0 at the end
             self.frame_index = (self.frame_index + 1) % 4
@@ -335,17 +335,17 @@ class pet():
         return
     
     def is_at_edge_of_screen(self):
-        if(self.x <= -50):
-            self.x = -45
+        if(self.x <= 0):
+            self.x = 5
             return True
-        if(self.x + 120 >= self.window.winfo_screenwidth()):
-            self.x = self.window.winfo_screenwidth() - 125
+        if(self.x + 80 >= self.window.winfo_screenwidth()):
+            self.x = self.window.winfo_screenwidth() - 85
             return True
-        if(self.y <= -50):
-            self.y = -45
+        if(self.y <= 0):
+            self.y = 5
             return True
-        if(self.y + 160 >= self.window.winfo_screenheight()):
-            self.y = self.window.winfo_screenheight() - 165
+        if(self.y + 120 >= self.window.winfo_screenheight()):
+            self.y = self.window.winfo_screenheight() - 125
             return True
         return False
     
