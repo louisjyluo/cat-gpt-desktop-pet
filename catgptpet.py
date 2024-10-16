@@ -10,19 +10,21 @@ class pet():
     def __init__(self):
         # create a window
         self.window = tk.Tk()
+        self.dialog = tk.Tk()
 
         #Reading the gifs for the animation
         idle = Image.open('latte_idle.gif')
         right = Image.open('latte_run_right.gif')     
         left = Image.open('latte_run_left.gif')
-        
+        yap_bubble = Image.open('speech_bubble_a.png')
         #Creating the list of frames
         idle_frames = []
         right_frames = []
         left_frames = []
         
-        #For loops used to make the list of frames per animation
+        yap_bubble.resize((200,200))
         
+        #For loops used to make the list of frames per animation
         ind = 0
         for frame in ImageSequence.Iterator(idle):
             idle.seek(ind)
@@ -55,6 +57,7 @@ class pet():
         
         self.frame_index = 0
         self.img = self.ani_idle[1]
+        self.bub_img = ImageTk.PhotoImage(yap_bubble)
         self.timer = 0
         
         self.jump_range_param = 40
@@ -88,9 +91,6 @@ class pet():
         # make window draw over all others
         self.window.attributes('-topmost', True)
 
-        # turn black into transparency
-        self.window.wm_attributes('-transparentcolor', 'black')
-
         # create a label as a container for our image
         self.label = tk.Label(self.window, bd=0, bg='black')
 
@@ -105,12 +105,39 @@ class pet():
         # give window to geometry manager (so it will appear)
         self.label.pack()
 
+        ### DIALOG BUBBLE SECTION OF THE CODE. INDEPENDENT FROM THE CAT MOVEMENT CODE ###
+        
+        # turn black into transparency
+        self.dialog.wm_attributes('-transparentcolor', 'black')
+        
+        self.dialog.config(highlightbackground='black')
+
+        # make window frameless
+        self.dialog.overrideredirect(True)
+
+        # make window draw over all others
+        self.dialog.attributes('-topmost', True)
+
+        # turn black into transparency
+        self.dialog.wm_attributes('-transparentcolor', 'black')
+        
+        self.bub_label = tk.Label(self.dialog, bd=0, bg='black')
+        
+        self.bub_x = self.window.winfo_screenwidth() - 800
+        self.bub_y = self.window.winfo_screenheight() - 600
+        self.dialog.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
+        
+        self.bub_label.configure(image=self.bub_img)
+
+        # give window to geometry manager (so it will appear)
+        self.bub_label.pack()
+        
         # run self.update() after 0ms when mainloop starts
         self.window.after(0, self.idle)
         self.window.mainloop()
 
     def walk_right(self):
-        self.x += 3
+        self.x += 2
         if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
@@ -118,7 +145,7 @@ class pet():
             return 
 
         # advance frame if 50ms have passed
-        if time.time() > self.timestamp + 0.05:
+        if time.time() > self.timestamp + 0.10:
             self.timestamp = time.time()
             # advance the frame by one, wrap back to 0 at the end
             self.frame_index = (self.frame_index + 1) % 4
@@ -140,7 +167,7 @@ class pet():
         return
         
     def walk_left(self):
-        self.x -= 3
+        self.x -= 2
         if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
@@ -149,7 +176,7 @@ class pet():
         # move right by one pixel
       
         # advance frame if 50ms have passed
-        if time.time() > self.timestamp + 0.05:
+        if time.time() > self.timestamp + 0.10:
             self.timestamp = time.time()
             # advance the frame by one, wrap back to 0 at the end
             self.frame_index = (self.frame_index + 1) % 4
@@ -321,10 +348,13 @@ class pet():
         
         # create the window
         self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+        self.dialog.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
         # add the image to our label
         self.label.configure(image=self.img)
+        self.bub_label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
         self.label.pack()
+        self.bub_label.pack()
         
         #idle 
         if self.timer == self.action_time:
@@ -338,14 +368,14 @@ class pet():
         if(self.x <= 0):
             self.x = 5
             return True
-        if(self.x + 80 >= self.window.winfo_screenwidth()):
-            self.x = self.window.winfo_screenwidth() - 85
+        if(self.x + 120 >= self.window.winfo_screenwidth()):
+            self.x = self.window.winfo_screenwidth() - 125
             return True
         if(self.y <= 0):
             self.y = 5
             return True
-        if(self.y + 120 >= self.window.winfo_screenheight()):
-            self.y = self.window.winfo_screenheight() - 125
+        if(self.y + 150 >= self.window.winfo_screenheight()):
+            self.y = self.window.winfo_screenheight() - 155
             return True
         return False
     
