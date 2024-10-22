@@ -13,7 +13,7 @@ class emotionClassifier():
         # 4 = fear
         # 5 = surprise
         
-        training_data = pd.read_csv("text.csv")
+        training_data = pd.read_csv("data/text.csv")
         print(training_data)
         
         

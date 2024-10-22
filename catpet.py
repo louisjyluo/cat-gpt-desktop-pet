@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
 import time
 import random
-import CatgptAI
+import catgpt
 import pyautogui
 from tkinter import ttk
 
@@ -13,10 +13,10 @@ class Pet():
         self.dialog = tk.Toplevel()
 
         #Reading the gifs for the animation
-        idle = Image.open('latte_idle.gif')
-        right = Image.open('latte_run_right.gif')     
-        left = Image.open('latte_run_left.gif')
-        yap_bubble = Image.open('speech_bubble.png')
+        idle = Image.open('data/latte_idle.gif')
+        right = Image.open('data/latte_run_right.gif')     
+        left = Image.open('data/latte_run_left.gif')
+        yap_bubble = Image.open('data/speech_bubble.png')
         #Creating the list of frames
         idle_frames = []
         right_frames = []
@@ -49,10 +49,13 @@ class Pet():
         right_frames.remove(right_frames[0])
         
         #Putting each frame in a list 
-        self.test_img = [tk.PhotoImage(file='chonk.png').subsample(20)]
+        self.test_img = [tk.PhotoImage(file='data/chonk.png').subsample(20)]
         self.ani_idle = [ImageTk.PhotoImage(i.resize((200,200))) for i in idle_frames]
         self.ani_left = [ImageTk.PhotoImage(i.resize((200,200))) for i in left_frames]
         self.ani_right = [ImageTk.PhotoImage(i.resize((200,200))) for i in right_frames]
+        print("ani_right_size:", len(self.ani_right))
+        print("ani_left_size:", len(self.ani_left))
+        print("ani_idle_size:", len(self.ani_idle))
         
         
         self.frame_index = 0
@@ -205,7 +208,7 @@ class Pet():
         if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_down)
+            self.window.after(10, self.fall_down)
             return 
         # move right by one pixel
        
@@ -231,13 +234,13 @@ class Pet():
             self.window.after(10, self.walk_up)
         return
     
-    def walk_down(self):
-        self.y += 1
-        # move right by one pixel
+    def fall_down(self):
+        self.y += 5
+        # fall all the way down to the bottom
         if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_up)
+            self.window.after(10, self.idle)
             return 
     
         # advance frame if 50ms have passed
@@ -254,12 +257,8 @@ class Pet():
         # give window to geometry manager (so it will appear)
         self.label.pack()
         
-        if self.timer == self.action_time:
-            self.next_function()
-        else:
-            self.timer += 1
-            # call update after 10ms
-            self.window.after(10, self.walk_down)
+        # call update after 10ms
+        self.window.after(10, self.fall_down)
         return
             
     #calling jump_right:
@@ -277,15 +276,20 @@ class Pet():
         if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_left)
+            self.window.after(10, self.fall_down)
             return 
             
         # advance frame if 50ms have passed
-        # if time.time() > self.timestamp + 0.05:
-        #     self.timestamp = time.time()
-        #     # advance the frame by one, wrap back to 0 at the end
-        #     self.frame_index = (self.frame_index + 1) % 4
-        #     self.img = self.walking_right[self.frame_index]
+        if self.timer > 0 and self.timer <= 20:
+            self.img = self.ani_right[4]
+        elif self.timer > 20 and self.timer <= 28:
+            self.img = self.ani_right[5]
+        elif self.timer > 28 and self.timer <= 48:
+            self.img = self.ani_right[0]
+        elif self.timer > 48 and self.timer <= 60:
+            self.img = self.ani_right[1]
+        else:
+            self.img = self.ani_right[2]
 
         # create the window
         self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
@@ -311,15 +315,19 @@ class Pet():
         if self.is_at_edge_of_screen():
             self.timer = 0
             self.action_time = random.randint(300, 800)
-            self.window.after(10, self.walk_right)
+            self.window.after(10, self.fall_down)
             return 
             
-        # advance frame if 50ms have passed
-        # if time.time() > self.timestamp + 0.05:
-        #     self.timestamp = time.time()
-        #     # advance the frame by one, wrap back to 0 at the end
-        #     self.frame_index = (self.frame_index + 1) % 4
-        #     self.img = self.walking_right[self.frame_index]
+        if self.timer > 0 and self.timer <= 20:
+            self.img = self.ani_left[4]
+        elif self.timer > 20 and self.timer <= 28:
+            self.img = self.ani_left[5]
+        elif self.timer > 28 and self.timer <= 48:
+            self.img = self.ani_left[0]
+        elif self.timer > 48 and self.timer <= 60:
+            self.img = self.ani_left[1]
+        else:
+            self.img = self.ani_left[2]
 
         # create the window
         self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
@@ -384,11 +392,21 @@ class Pet():
         return False
     
     def jump_parabola(self, x):
-        y = 0.5 * x
+        y = 0.3 * x
         return int(y)
     
     def next_function(self):
-        self.seed_randomizer = random.randint(0,6)
+        # case 2: 
+        #     self.action_time = random.randint(300, 800)
+        #     self.window.after(10, self.fall_down)
+        #     return
+        # case 3: 
+        #     self.action_time = random.randint(300, 800)
+        #     self.window.after(10, self.walk_up)
+        #     return
+        
+        #random.randint(0,4)
+        self.seed_randomizer = 2
         self.timer = 0
         print(self.seed_randomizer)
         match self.seed_randomizer:
@@ -401,22 +419,14 @@ class Pet():
                 self.window.after(10, self.walk_left)
                 return
             case 2: 
-                self.action_time = random.randint(300, 800)
-                self.window.after(10, self.walk_down)
-                return
-            case 3: 
-                self.action_time = random.randint(300, 800)
-                self.window.after(10, self.walk_up)
-                return
-            case 4: 
                 self.action_time = self.jump_range_param * 2 -1
                 self.window.after(10, self.jump_right)
                 return 
-            case 5: 
+            case 3: 
                 self.action_time = self.jump_range_param * 2 -1
                 self.window.after(10, self.jump_left)
                 return
-            case 6: 
+            case 4: 
                 self.dialog.deiconify()
                 self.action_time = random.randint(300, 800)
                 self.window.after(10, self.idle)
