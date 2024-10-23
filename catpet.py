@@ -406,7 +406,7 @@ class Pet():
         #     return
         
         #random.randint(0,4)
-        self.seed_randomizer = 2
+        self.seed_randomizer = random.randint(0,4)
         self.timer = 0
         print(self.seed_randomizer)
         match self.seed_randomizer:
