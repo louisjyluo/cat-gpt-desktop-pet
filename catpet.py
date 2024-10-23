@@ -10,19 +10,23 @@ class Pet():
     def __init__(self):
         # create a window
         self.window = tk.Tk()
+        self.dialog_img = tk.Toplevel()
         self.dialog = tk.Toplevel()
+        self.food = tk.Toplevel()
 
         #Reading the gifs for the animation
         idle = Image.open('data/latte_idle.gif')
         right = Image.open('data/latte_run_right.gif')     
         left = Image.open('data/latte_run_left.gif')
         yap_bubble = Image.open('data/speech_bubble.png')
+        tuna = Image.open('data/can-of-tuna.png')
         #Creating the list of frames
         idle_frames = []
         right_frames = []
         left_frames = []
         
         yap_bubble = yap_bubble.copy().resize((200,200))
+        tuna = tuna.copy().resize((200,200))
         
         #For loops used to make the list of frames per animation
         ind = 0
@@ -61,7 +65,9 @@ class Pet():
         self.frame_index = 0
         self.img = self.ani_idle[1]
         self.bub_img = ImageTk.PhotoImage(yap_bubble)
+        self.food_img = ImageTk.PhotoImage(tuna)
         self.timer = 0
+        self.eating = False
         
         self.jump_range_param = 40
         
@@ -71,19 +77,11 @@ class Pet():
         self.x_range_left = [*range(-1 * self.jump_range_param, self.jump_range_param)]
         self.x_range_left.reverse()    
                 
-        # self.response_screen = tk.Label(self.window, text="", font= ('Helvetica 12'), height=0)
-        # self.response_screen.pack(pady=1)
-        
-        # self.input_box = tk.Entry(self.window, width=20, bd=0, bg="white", fg="black", highlightthickness = 0,
-        #                             borderwidth=0, font=("Ariel", 12))
-        # self.input_box.config(highlightthickness = 0, borderwidth=0)
-        # self.input_box.pack()
-        
-        # self.button = tk.Button(self.window, text= "Ask Me", command=self.on_click)
-        # self.button.pack()
     
         # timestamp to check whether to advance frame
         self.timestamp = time.time()
+        
+        ### CAT ANIMATION SECTION OF THE CODE. INDEPENDENT FROM THE CAT MOVEMENT CODE ###
 
         # set focushighlight to black when the window does not have focus
         self.window.config(highlightbackground='black')
@@ -100,8 +98,8 @@ class Pet():
         self.label = tk.Label(self.window, bd=0, bg='black')
 
         # create a window of size 128x128 pixels, at coordinates 0,0
-        self.x = self.window.winfo_screenwidth() - 800
-        self.y = self.window.winfo_screenheight() - 500
+        self.x = self.window.winfo_screenwidth() - 500
+        self.y = self.window.winfo_screenheight() - 220
         self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
 
         # add the image to our label
@@ -112,40 +110,101 @@ class Pet():
 
         ### DIALOG BUBBLE SECTION OF THE CODE. INDEPENDENT FROM THE CAT MOVEMENT CODE ###
         
-        # turn black into transparency
-        self.dialog.wm_attributes('-transparentcolor', 'black')
-        
         self.dialog.config(highlightbackground='black')
+        self.dialog_img.config(highlightbackground='black')
 
         # make window frameless
         self.dialog.overrideredirect(True)
-
+        self.dialog_img.overrideredirect(True)
+        
         # make window draw over all others
         self.dialog.attributes('-topmost', True)
+        self.dialog_img.attributes('-topmost', True)
 
+        
         # turn black into transparency
         self.dialog.wm_attributes('-transparentcolor', 'black')
+        self.dialog_img.wm_attributes('-transparentcolor', 'black')
         
-        self.bub_label = tk.Label(self.dialog, bd=0, bg='black')
-        
-        self.bub_x = self.window.winfo_screenwidth() - 780
-        self.bub_y = self.window.winfo_screenheight() - 600
-        self.dialog.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
-        
-        self.bub_label.configure(image=self.bub_img)
-
-        # give window to geometry manager (so it will appear)
+        self.bub_label = tk.Label(self.dialog, bd=0, text="meow :3", font= ('Helvetica 12'), height=1)
+        self.bub = tk.Label(self.dialog_img, bd=0, bg='black', image=self.bub_img)
         self.bub_label.pack()
+        self.bub.pack()
+        
+        ### FOOD INPUT SECTION OF THE CODE. INDEPENDENT FROM THE CAT MOVEMENT/DIALOG BUBBLE CODE ###
+        
+        self.food.wm_attributes('-transparentcolor', 'black')
+        
+        self.food.config(highlightbackground='black')
+
+        # make window frameless
+        self.food.overrideredirect(True)
+
+        # make window draw over all others
+        self.food.attributes('-topmost', True)
+
+        # turn black into transparency
+        self.food.wm_attributes('-transparentcolor', 'black')
+        
+        self.food_label = tk.Label(self.food, bd=0, bg='black')
+        
+        self.food_x = self.food_label.winfo_screenwidth() - 1000
+        self.food_y = self.food_label.winfo_screenheight() - 245
+        self.food.geometry('200x200+{x}+{y}'.format(x=str(self.food_x), y = str(self.food_y)))
+        
+        self.input_box = tk.Entry(self.food, width=20, bd=0, bg="white", fg="black", highlightthickness = 0,
+                                    borderwidth=0, font=("Ariel", 12))
+        self.input_box.config(highlightthickness = 0, borderwidth=0)
+        self.input_box.pack()
+        
+        self.button = tk.Button(self.food, text= "Feed", command=self.on_click)
+        self.button.pack()
+        
+        self.food_label.configure(image=self.food_img)
+        self.food_label.pack()
         
         # run self.update() after 0ms when mainloop starts
         self.window.after(0, self.idle)
         self.window.mainloop()
 
+    def idle(self):
+        # advance frame if 50ms have passed
+        self.bub_x = self.x + 20
+        self.bub_y = self.y - 100
+        
+        if self.timer == 0:
+            self.dialog.deiconify()
+            self.dialog_img.deiconify()
+           
+        if time.time() > self.timestamp + 0.15:
+            self.timestamp = time.time()
+            # advance the frame by one, wrap back to 0 at the end
+            self.frame_index = (self.frame_index + 1) % 7
+            self.img = self.ani_idle[self.frame_index]
+        
+        self.dialog_img.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
+        self.dialog.geometry('100x70+{x}+{y}'.format(x=str(self.bub_x + 50), y = str(self.bub_y + 30)))
+        self.label.configure(image=self.img)
+        # give window to geometry manager (so it will appear)
+        self.label.pack()
+        self.bub_label.pack()
+        self.bub.pack()
+        
+        #idle 
+        if self.timer == self.action_time:
+            self.dialog.withdraw()
+            self.dialog_img.withdraw()
+            self.next_function()
+        else:
+            self.timer += 1
+            self.window.after(10, self.idle)
+        return
+
     def walk_right(self):
         self.x += 2
         if self.is_at_edge_of_screen():
             self.timer = 0
-            self.action_time = random.randint(300, 800)
+            self.action_time = random.randint(250, 500)
             self.window.after(10, self.walk_left)
             return 
 
@@ -153,7 +212,7 @@ class Pet():
         if time.time() > self.timestamp + 0.10:
             self.timestamp = time.time()
             # advance the frame by one, wrap back to 0 at the end
-            self.frame_index = (self.frame_index + 1) % 4
+            self.frame_index = (self.frame_index + 1) % 6
             self.img = self.ani_right[self.frame_index]
 
         # create the window
@@ -175,7 +234,7 @@ class Pet():
         self.x -= 2
         if self.is_at_edge_of_screen():
             self.timer = 0
-            self.action_time = random.randint(300, 800)
+            self.action_time = random.randint(250, 500)
             self.window.after(10, self.walk_right)
             return 
         # move right by one pixel
@@ -184,7 +243,7 @@ class Pet():
         if time.time() > self.timestamp + 0.10:
             self.timestamp = time.time()
             # advance the frame by one, wrap back to 0 at the end
-            self.frame_index = (self.frame_index + 1) % 4
+            self.frame_index = (self.frame_index + 1) % 6
             self.img = self.ani_left[self.frame_index]
 
         # create the window
@@ -275,7 +334,7 @@ class Pet():
         
         if self.is_at_edge_of_screen():
             self.timer = 0
-            self.action_time = random.randint(300, 800)
+            self.action_time = random.randint(250, 500)
             self.window.after(10, self.fall_down)
             return 
             
@@ -314,7 +373,7 @@ class Pet():
         
         if self.is_at_edge_of_screen():
             self.timer = 0
-            self.action_time = random.randint(300, 800)
+            self.action_time = random.randint(250, 500)
             self.window.after(10, self.fall_down)
             return 
             
@@ -344,37 +403,47 @@ class Pet():
             self.window.after(10, self.jump_left)
         return
     
-    def idle(self):
-        
-        # advance frame if 50ms have passed
-        self.bub_x = self.x + 20
-        self.bub_y = self.y - 100
-        
-        if time.time() > self.timestamp + 0.25:
-            self.timestamp = time.time()
-            # advance the frame by one, wrap back to 0 at the end
-            self.frame_index = (self.frame_index + 1) % 4
-            self.img = self.ani_idle[self.frame_index]
-        
-        
-        # create the window
-        self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
-        self.dialog.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
-        # add the image to our label
-        self.label.configure(image=self.img)
-        self.bub_label.configure(image=self.bub_img)
-        # give window to geometry manager (so it will appear)
-        self.label.pack()
-        self.bub_label.pack()
-        
-        #idle 
-        if self.timer == self.action_time:
-            self.dialog.withdraw()
+    #Go towards the tuna can and "eat" it for the prompt
+    def eat(self):
+        if self.x + 200 > self.food_x and self.x < self.food_x + 200:
+            self.dialog.geometry('100x70+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
+            self.dialog_img.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
+            self.bub_label.config(text=self.input_box.get(), wraplength= 180, height=1)
+            self.eating = False
             self.next_function()
+        elif self.x < self.food_x:
+            self.x += 2
+
+            if time.time() > self.timestamp + 0.10:
+                self.timestamp = time.time()
+                self.frame_index = (self.frame_index + 1) % 6
+                self.img = self.ani_right[self.frame_index]
+
+            # create the window
+            self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+            # add the image to our label
+            self.label.configure(image=self.img)
+            # give window to geometry manager (so it will appear)
+            self.label.pack()
+            
+            self.window.after(10, self.eat)
         else:
-            self.timer += 1
-            self.window.after(10, self.idle)
-        return
+            self.x -= 2
+
+            if time.time() > self.timestamp + 0.10:
+                self.timestamp = time.time()
+                self.frame_index = (self.frame_index + 1) % 6
+                self.img = self.ani_left[self.frame_index]
+
+            # create the window
+            self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+            # add the image to our label
+            self.label.configure(image=self.img)
+            # give window to geometry manager (so it will appear)
+            self.label.pack()
+            
+            self.window.after(10, self.eat)
+    
     
     def is_at_edge_of_screen(self):
         if(self.x <= 0):
@@ -386,8 +455,8 @@ class Pet():
         if(self.y <= 0):
             self.y = 5
             return True
-        if(self.y + 150 >= self.window.winfo_screenheight()):
-            self.y = self.window.winfo_screenheight() - 155
+        if(self.y + 215 >= self.window.winfo_screenheight()):
+            self.y = self.window.winfo_screenheight() - 220
             return True
         return False
     
@@ -406,16 +475,20 @@ class Pet():
         #     return
         
         #random.randint(0,4)
+        if self.eating:
+            self.window.after(10, self.eat)
+            return
+        
         self.seed_randomizer = random.randint(0,4)
         self.timer = 0
         print(self.seed_randomizer)
         match self.seed_randomizer:
             case 0: 
-                self.action_time = random.randint(300, 800)
+                self.action_time = random.randint(250, 500)
                 self.window.after(10, self.walk_right)
                 return
             case 1: 
-                self.action_time = random.randint(300, 800)
+                self.action_time = random.randint(250, 500)
                 self.window.after(10, self.walk_left)
                 return
             case 2: 
@@ -426,8 +499,7 @@ class Pet():
                 self.action_time = self.jump_range_param * 2 -1
                 self.window.after(10, self.jump_left)
                 return
-            case 4: 
-                self.dialog.deiconify()
+            case 4:
                 self.action_time = random.randint(300, 800)
                 self.window.after(10, self.idle)
                 return
@@ -437,8 +509,11 @@ class Pet():
         #if x >= self.x and y >= self.y and x <= self.x + 125 and y <= self.y + 165:
             # response = catgptAI.catgptAI.chat(self.input_box.get())
             try: 
-                self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
+                # self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
                 # self.response_screen.config(text="response", wraplength= 180, height=6, padx=-1)
+                # print(self.input_box.get())
+                self.eating = True
+                print("Starting the Eating process")
             except:
                 print("meow")
         #self.window.after(100, self.on_click)
