@@ -15,6 +15,17 @@ from nltk.stem import WordNetLemmatizer
 nltk.download("wordnet")
 nltk.download("omw-1.4")
 
+# Current Algo idea (ensemble 1 vs All classification)
+# Fit
+# Take each label put all the words (trigram??? Lemmatized trigram) with that label into a dict
+# Which will create 6 separates dictionaries that contains all the training words and how many times they have occurred in all our data
+# The more often a word occurs the more likely it is correlated to the label, therefore their weighting will be higher
+# Save all 6 dictionary 
+# Predict
+# Given a new sentence, check what the value of each word gives. Then take the summed value divide it by total amount of words placed into the dictionary to get the portions
+# Do it for all 6 dictionaries and see what percentage each model outputs
+# Choose the max(probability)
+
 class emotionClassifier():
     
     def __init__(self):
@@ -29,7 +40,8 @@ class emotionClassifier():
     
     def predict(self, X, y):
         return NotImplementedError
-
+    
+# Make a plot that can
 class dataProcessor():
     def processor():
         wnl = WordNetLemmatizer()
@@ -47,9 +59,14 @@ class dataProcessor():
         y_valid = training_data['label'][7000:9000]
         # print(X, y, X_valid, y_valid)
         
+        new_X = []
         for sen in X:
+            new_sen = []
             for word in sen.split():
-                print("{0:20}{1:20}".format(word, wnl.lemmatize(word, pos="v")))
+                new_word = wnl.lemmatize(word, pos="v")
+                new_sen.append(new_word)
+            new_X.append(" ".join(new_sen))
+        return new_X
         
 proc = dataProcessor
 proc.processor()
