@@ -143,10 +143,22 @@ class dataProcessor():
 # proc.processor()
 
 training_data = pd.read_csv("data/transformed_text.csv")
+X = training_data['text'].head(400000)
+y = training_data['label'].head(400000)
 X_valid = training_data['text'].tail(10000).reset_index(drop=True)
 y_valid = training_data['label'].tail(10000).reset_index(drop=True)
 proc = emotionClassifier()
 proc.fit()
+
+y_hat = proc.predict(X)
+total = len(y)
+yes = 0
+for i in range(total):
+    if y_hat[i] == y[i]:
+        yes += 1
+t_err = float(yes) / total * 100
+print("Training Accuracy: ",t_err, "%")
+
 y_hat = proc.predict(X_valid)
 total = len(y_valid)
 yes = 0
