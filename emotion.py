@@ -4,17 +4,6 @@ import numpy as np
 import nltk
 import ssl
 
-# try:
-#     _create_unverified_https_context = ssl._create_unverified_context
-# except AttributeError:
-#     pass
-# else:
-#     ssl._create_default_https_context = _create_unverified_https_context
-
-from nltk.stem import WordNetLemmatizer
-# nltk.download("wordnet")
-# nltk.download("omw-1.4")
-
 # Current Algo idea (ensemble 1 vs All classification)
 # Fit
 # Take each label put all the words (trigram??? Lemmatized trigram) with that label into a dict
@@ -111,83 +100,51 @@ class emotionDictClassifier():
 
 class emotionLinearRegression():
     
-    def __init__():
+    def __init__(self):
         pass
 
     def fit(self, X, y):
-        return NotImplementedError
+        self.w = self.gradDes(X, y)
+        print(self.w)
     
     def predict(self, X_pred):
-        return NotImplementedError
+        y_hat_line = X_pred @ self.w
+        y_hat = []
+        for i in y_hat_line:
+            classifier = []
+            for j in range(6):
+                classifier.append(abs(i - j))
+            y_hat.append(np.argmin(classifier))
+        return y_hat
+
+    def gradDes(self, X, y):
+        n, d = X.shape
+        n, self.d = X.shape
+        learning_rate = 0.01
+        max_eval = 20
+        threshold = np.ones(d) * 0.01
+        curr_w = np.ones(d) * 1
+        prev_w = np.zeros(d)
+        
+        for i in range(max_eval):
+            if self.break_yes(curr_w, prev_w, threshold):
+                break
+            prev_w = curr_w
+            g = self.getFAndG(X, y, curr_w)
+            curr_w = curr_w - (learning_rate * g)
+            print("Currently on iteration:", i)
+        return curr_w
             
     
-# Make a plot that can
-class dataProcessor():
-        # label:
-        # 0 = sadness
-        # 1 = love
-        # 2 = joy
-        # 3 = anger
-        # 4 = fear
-        # 5 = surprise
-    def __init__(self):
-        self.wnl = WordNetLemmatizer()
-        self.training_data = pd.read_csv("data/text.csv")
-        self.stop_words = open("data/stopwords.txt", "r")
-        self.stop_words = self.stop_words.read().split()
-        
-    def processorDict(self):
-        X = self.training_data['text']
-        y = self.training_data['label']
-        
-        new_X = []
-        for sen in X:
-            new_sen = []
-            for word in sen.split():
-                if word.lower() not in self.stop_words:
-                    new_word = self.wnl.lemmatize(word, pos="v")
-                    new_sen.append(new_word)
-            new_X.append(" ".join(new_sen))
-        data = pd.DataFrame({"text" : new_X, "label" : y})
-        data.to_csv("data/transformed_text_dict.csv", index=True)
-    
-    def processorLinear(self):
-        X = self.training_data['text'].head(1500)
-        y = self.training_data['label'].head(1500)
-        data = pd.DataFrame({"label" : y})
-        for i, sen in enumerate(X):
-            words = sen.split()
-            obs = []              
-            mapper = np.vectorize(self.lemmatize)
-            new_sen = mapper(words)
-            new_sen = np.array(list(filter(None, new_sen)))
-            obs = []
-            for j in range(len(new_sen) - 1):
-                ngram = new_sen[j] + " " + new_sen[j + 1]
-                obs.append(ngram)
-            for s in obs:
-                if s in data.columns:
-                    data.iloc[i, data.columns.get_loc(s)] += 1
-                else:
-                    data = data.assign(**{s:0})
-                    data.iloc[i, data.columns.get_loc(s)] += 1
-            print("row", i , "completed")
-        data.to_csv("data/transformed_text_linear.csv", index=True)
-    
-    def lemmatize(self, word):
-        if word.lower() not in self.stop_words:
-            return self.wnl.lemmatize(word, pos="v")
+    def getFAndG(self, X, y, w):
+        # f = 1/2.0 * (w.T @ X.T @ X @ w - 2*y.T @ X @ w + y.T @ y) + 1/2.0 * (w.T @ w)
+        g = X.T @ X @ w - X.T @ y + w
+        return g
 
-# proc = dataProcessor
-# proc.processor()
-
-def processDict():
-    proc = dataProcessor()
-    proc.processorDict()
-    
-def processLinear():
-    proc = dataProcessor()
-    proc.processorLinear()
+    def break_yes(self, curr_w, prev_w, threshold):
+        yes = abs(prev_w - curr_w) <= threshold
+        print("this many passes the threshold:", sum(yes))
+        return sum(yes) > self.d / 2
 
 def dict():
     training_data = pd.read_csv("data/transformed_text_dict.csv")
@@ -222,9 +179,9 @@ def dict():
     
 def linear():
     training_data = pd.read_csv("data/transformed_text_linear.csv")
-    X = training_data['text'].head(1200)
+    X = training_data.drop(['label'], axis=1).head(1200)
     y = training_data['label'].head(1200)
-    X_valid = training_data['text'].tail(300).reset_index(drop=True)
+    X_valid = training_data.drop(['label'], axis=1).tail(300).reset_index(drop=True)
     y_valid = training_data['label'].tail(300).reset_index(drop=True)
     proc = emotionLinearRegression()
     proc.fit(X, y)
@@ -243,5 +200,3 @@ def linear():
 
 #dict()    
 linear()
-#processDict()
-#processLinear())
