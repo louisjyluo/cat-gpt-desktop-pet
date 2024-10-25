@@ -120,7 +120,7 @@ class emotionLinearRegression():
     def gradDes(self, X, y):
         n, d = X.shape
         n, self.d = X.shape
-        learning_rate = 0.01
+        learning_rate = 0.03
         max_eval = 20
         threshold = np.ones(d) * 0.01
         curr_w = np.ones(d) * 1
@@ -144,7 +144,7 @@ class emotionLinearRegression():
     def break_yes(self, curr_w, prev_w, threshold):
         yes = abs(prev_w - curr_w) <= threshold
         print("this many passes the threshold:", sum(yes))
-        return sum(yes) > self.d / 2
+        return sum(yes) > self.d * 0.8
 
 def dict():
     training_data = pd.read_csv("data/transformed_text_dict.csv")
@@ -179,10 +179,10 @@ def dict():
     
 def linear():
     training_data = pd.read_csv("data/transformed_text_linear.csv")
-    X = training_data.drop(['label'], axis=1).head(1200)
-    y = training_data['label'].head(1200)
-    X_valid = training_data.drop(['label'], axis=1).tail(300).reset_index(drop=True)
-    y_valid = training_data['label'].tail(300).reset_index(drop=True)
+    X = training_data.drop(['label', 'index'], axis=1).head(1000)
+    y = training_data['label'].head(1000)
+    X_valid = training_data.drop(['label', 'index'], axis=1).tail(100).reset_index(drop=True)
+    y_valid = training_data['label'].tail(100).reset_index(drop=True)
     proc = emotionLinearRegression()
     proc.fit(X, y)
 
