@@ -48,8 +48,8 @@ class dataProcessor():
         data.to_csv("data/transformed_text_dict.csv", index=True)
     
     def processorLinear(self):
-        X = self.training_data['text'].head(1500)
-        y = self.training_data['label'].head(1500)
+        X = self.training_data['text'].head(2000)
+        y = self.training_data['label'].head(2000)
         data = pd.DataFrame({"label" : y})
         for i, sen in enumerate(X):
             words = sen.split()
@@ -85,5 +85,5 @@ def processLinear():
     proc = dataProcessor()
     proc.processorLinear()
 
-processDict()
-#processLinear())
+#processDict()
+processLinear()

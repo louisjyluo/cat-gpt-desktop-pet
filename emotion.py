@@ -1,8 +1,10 @@
 import random
 import pandas as pd
 import numpy as np
-import nltk
-import ssl
+from numpy.linalg import norm
+from numpy.linalg import _umath_linalg
+import scipy as scp
+from scipy.linalg import solve
 
 # Current Algo idea (ensemble 1 vs All classification)
 # Fit
@@ -101,14 +103,19 @@ class emotionDictClassifier():
 class emotionLinearRegression():
     
     def __init__(self):
-        pass
+        self.verbose = False
+        self.max_evals = 50
 
     def fit(self, X, y):
-        self.w = self.gradDes(X, y)
+        n,d = X.shape
+        # self.w = self.gradDes(X, y)
+        print(X.T @ X + np.identity(d), X.T @ y)
+        self.w = solve(X.T @ X + 0.0001 * np.identity(d), X.T @ y)
         print(self.w)
     
     def predict(self, X_pred):
         y_hat_line = X_pred @ self.w
+        # y_hat_norm = (y_hat_line - y_hat_line.mean())/(y_hat_line.std()) * 5
         y_hat = []
         for i in y_hat_line:
             classifier = []
@@ -120,18 +127,15 @@ class emotionLinearRegression():
     def gradDes(self, X, y):
         n, d = X.shape
         n, self.d = X.shape
-        learning_rate = 0.03
-        max_eval = 20
+        learning_rate = 0.008
         threshold = np.ones(d) * 0.01
         curr_w = np.ones(d) * 1
-        prev_w = np.zeros(d)
         
-        for i in range(max_eval):
-            if self.break_yes(curr_w, prev_w, threshold):
-                break
-            prev_w = curr_w
+        for i in range(self.max_evals):
             g = self.getFAndG(X, y, curr_w)
             curr_w = curr_w - (learning_rate * g)
+            if self.break_yes(g, i, threshold):
+                break
             print("Currently on iteration:", i)
         return curr_w
             
@@ -141,10 +145,26 @@ class emotionLinearRegression():
         g = X.T @ X @ w - X.T @ y + w
         return g
 
-    def break_yes(self, curr_w, prev_w, threshold):
-        yes = abs(prev_w - curr_w) <= threshold
-        print("this many passes the threshold:", sum(yes))
-        return sum(yes) > self.d * 0.8
+    def break_yes(self, g, iteration, threshold):
+        gradient_norm = norm(g, float("inf"))
+        if gradient_norm < threshold:
+            if self.verbose:
+                print(
+                    "Problem solved up to optimality tolerance {:.3f}".format(
+                        threshold
+                    )
+                )
+            return True
+        elif iteration >= self.max_evals:
+            if self.verbose:
+                print(
+                    "Reached maximum number of function evaluations {:.3f}".format(
+                        threshold
+                    )
+                )
+            return True
+        else:
+            return False
 
 def dict():
     training_data = pd.read_csv("data/transformed_text_dict.csv")
@@ -179,10 +199,10 @@ def dict():
     
 def linear():
     training_data = pd.read_csv("data/transformed_text_linear.csv")
-    X = training_data.drop(['label', 'index'], axis=1).head(1000)
-    y = training_data['label'].head(1000)
-    X_valid = training_data.drop(['label', 'index'], axis=1).tail(100).reset_index(drop=True)
-    y_valid = training_data['label'].tail(100).reset_index(drop=True)
+    X = training_data.drop(['label', 'index'], axis=1).head(1800)
+    y = training_data['label'].head(1800)
+    X_valid = training_data.drop(['label', 'index'], axis=1).tail(200).reset_index(drop=True)
+    y_valid = training_data['label'].tail(200).reset_index(drop=True)
     proc = emotionLinearRegression()
     proc.fit(X, y)
 
