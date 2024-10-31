@@ -45,37 +45,54 @@ class dataProcessor():
                     new_sen.append(new_word)
             new_X.append(" ".join(new_sen))
         data = pd.DataFrame({"text" : new_X, "label" : y})
-        data.to_csv("data/transformed_text_dict.csv", index=True)
+        data.to_csv("data/transformed_text_dict.csv", index=True, index_label="index")
     
-    def processorLinear(self):
-        X = self.training_data['text'].head(2000)
-        y = self.training_data['label'].head(2000)
-        data = pd.DataFrame({"label" : y})
-        for i, sen in enumerate(X):
+    def processorLinear(self, d_points):
+        training_data = pd.read_csv("data/transformed_text_dict.csv")
+        X = training_data['text'].head(d_points)
+        self.y_lin = training_data['label'].head(d_points)
+        self.linear_data_dict = {}
+        self.linear_data = pd.DataFrame()
+        LRfunc = np.vectorize(self.loopRow)
+        LRfunc(X, range(len(X)))
+        self.linear_data = self.linear_data.from_dict(self.linear_data_dict)
+        self.linear_data = self.linear_data.assign(label = self.y_lin)
+        self.linear_data.to_csv("data/transformed_text_linear.csv", index=True, index_label="index")
+        
+    def loopRow(self, sen, i):
+        if isinstance(sen, str):
             words = sen.split()
-            obs = []              
-            mapper = np.vectorize(self.lemmatize)
-            new_sen = mapper(words)
-            new_sen = np.array(list(filter(None, new_sen)))
             obs = []
-            for j in range(len(new_sen) - 1):
-                ngram = new_sen[j] + " " + new_sen[j + 1]
+            for j in range(len(words) - 1):
+                ngram = words[j] + " " + words[j + 1]
                 obs.append(ngram)
-            for s in obs:
-                if s in data.columns:
-                    data.iloc[i, data.columns.get_loc(s)] += 1
-                else:
-                    data = data.assign(**{s:0})
-                    data.iloc[i, data.columns.get_loc(s)] += 1
+            if len(obs) != 0:
+                func = np.vectorize(self.newFeature)
+                func(obs, i)
             print("row", i , "completed")
-        data.to_csv("data/transformed_text_linear.csv", index=True)
+    
+    def newFeature(self, s, i):
+        if s in self.linear_data_dict:
+            self.linear_data_dict[s][i] += 1
+        else:
+            self.linear_data_dict[s] = np.zeros(len(self.y_lin))
+            self.linear_data_dict[s][i] += 1
+    
+    def allZeroOrOne(self, c):
+        i0, i1 = 0,0
+        for i in c:
+            if i == 0:
+                i0 += 1
+        for i in c:
+            if i == 1:
+                i1 += 1
+        if i0 == 5 or i1 == 5:
+            return False
+        return True
     
     def lemmatize(self, word):
         if word.lower() not in self.stop_words:
             return self.wnl.lemmatize(word, pos="v")
-
-# proc = dataProcessor
-# proc.processor()
 
 def processDict():
     proc = dataProcessor()
@@ -83,7 +100,7 @@ def processDict():
     
 def processLinear():
     proc = dataProcessor()
-    proc.processorLinear()
+    proc.processorLinear(2000)
 
 #processDict()
 processLinear()

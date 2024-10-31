@@ -4,7 +4,7 @@ import numpy as np
 from numpy.linalg import norm
 from numpy.linalg import _umath_linalg
 import scipy as scp
-from scipy.linalg import solve
+from scipy.linalg import solve, inv
 
 # Current Algo idea (ensemble 1 vs All classification)
 # Fit
@@ -27,35 +27,34 @@ class emotionDictClassifier():
         self.l0, self.l1, self.l2, self.l3, self.l4, self.l5 = [0,0,0,0,0,0]
         n = len(X)
         for i in range(n):
-            if isinstance(X[i], float):
-                break
-            los = X[i].split()
-            slen = len(los)
-            match y[i]:
-                case 0:
-                    self.l0 += slen
-                    self.di0 = self.genDict(self.di0, los)
-                    continue
-                case 1:
-                    self.l1 += slen
-                    self.di1 = self.genDict(self.di1, los)
-                    continue
-                case 2:
-                    self.l2 += slen
-                    self.di2 = self.genDict(self.di2, los)
-                    continue
-                case 3:
-                    self.l3 += slen
-                    self.di3 = self.genDict(self.di3, los)
-                    continue
-                case 4:
-                    self.l4 += slen
-                    self.di4 = self.genDict(self.di4, los)
-                    continue
-                case 5:
-                    self.l5 += slen
-                    self.di5 = self.genDict(self.di5, los)
-                    continue
+            if isinstance(X[i], str):
+                los = X[i].split()
+                slen = len(los)
+                match y[i]:
+                    case 0:
+                        self.l0 += slen
+                        self.di0 = self.genDict(self.di0, los)
+                        continue
+                    case 1:
+                        self.l1 += slen
+                        self.di1 = self.genDict(self.di1, los)
+                        continue
+                    case 2:
+                        self.l2 += slen
+                        self.di2 = self.genDict(self.di2, los)
+                        continue
+                    case 3:
+                        self.l3 += slen
+                        self.di3 = self.genDict(self.di3, los)
+                        continue
+                    case 4:
+                        self.l4 += slen
+                        self.di4 = self.genDict(self.di4, los)
+                        continue
+                    case 5:
+                        self.l5 += slen
+                        self.di5 = self.genDict(self.di5, los)
+                        continue
         #print(self.l0, self.l1, self.l2, self.l3, self.l4, self.l5)
         self.p = np.array([float(self.l0), float(self.l1), float(self.l2), float(self.l3), float(self.l4), float(self.l5)])
     
@@ -109,12 +108,30 @@ class emotionLinearRegression():
     def fit(self, X, y):
         n,d = X.shape
         # self.w = self.gradDes(X, y)
-        print(X.T @ X + np.identity(d), X.T @ y)
-        self.w = solve(X.T @ X + 0.0001 * np.identity(d), X.T @ y)
+        # 0.0001 for linear BoW
+        self.w = solve(X.T @ X + 0.001 * np.identity(d), X.T @ y)
         print(self.w)
-    
+        
     def predict(self, X_pred):
         y_hat_line = X_pred @ self.w
+        # y_hat_norm = (y_hat_line - y_hat_line.mean())/(y_hat_line.std()) * 5
+        y_hat = []
+        for i in y_hat_line:
+            classifier = []
+            for j in range(6):
+                classifier.append(abs(i - j))
+            y_hat.append(np.argmin(classifier))
+        return y_hat
+    
+    def fit_kernel(self, X, y):
+        n,d = X.shape
+        self.X = X
+        K = (1 + X.T @ X) ** 10
+        self.U = inv(K + 1 * np.identity(d)) @ y
+    
+    def predict_kernel(self, X_pred):
+        K_test = (1 + X_pred.T @ self.X) ** 10
+        y_hat_line = K_test @ self.U
         # y_hat_norm = (y_hat_line - y_hat_line.mean())/(y_hat_line.std()) * 5
         y_hat = []
         for i in y_hat_line:
@@ -175,7 +192,7 @@ def dict():
     proc = emotionDictClassifier()
     proc.fit(X, y)
 
-    a = 1
+    a = 5
     b = np.inf
     y_hat = proc.predict(X, 0, 10000000)
     total = len(y)
@@ -199,10 +216,10 @@ def dict():
     
 def linear():
     training_data = pd.read_csv("data/transformed_text_linear.csv")
-    X = training_data.drop(['label', 'index'], axis=1).head(1800)
-    y = training_data['label'].head(1800)
-    X_valid = training_data.drop(['label', 'index'], axis=1).tail(200).reset_index(drop=True)
-    y_valid = training_data['label'].tail(200).reset_index(drop=True)
+    X = training_data.drop(['label', 'index'], axis=1).head(2500)
+    y = training_data['label'].head(2500)
+    X_valid = training_data.drop(['label', 'index'], axis=1).tail(500).reset_index(drop=True)
+    y_valid = training_data['label'].tail(500).reset_index(drop=True)
     proc = emotionLinearRegression()
     proc.fit(X, y)
 
@@ -217,6 +234,7 @@ def linear():
     v_err = float(yes) / total * 100
     print("Training Accuracy: ",t_err, "%")
     print("Validation Accuracy: ",v_err, "%")
+    
 
 #dict()    
-linear()
+linear() 
