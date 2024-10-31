@@ -1,3 +1,4 @@
+import asyncio
 import tkinter as tk
 from PIL import Image, ImageTk, ImageSequence
 import time
@@ -10,7 +11,7 @@ class Pet():
     def __init__(self):
         # create a window
         self.window = tk.Tk()
-        self.dialog_img = tk.Toplevel()
+        #self.dialog_img = tk.Toplevel()
         self.dialog = tk.Toplevel()
         self.food = tk.Toplevel()
 
@@ -111,25 +112,32 @@ class Pet():
         ### DIALOG BUBBLE SECTION OF THE CODE. INDEPENDENT FROM THE CAT MOVEMENT CODE ###
         
         self.dialog.config(highlightbackground='black')
-        self.dialog_img.config(highlightbackground='black')
+        #self.dialog_img.config(highlightbackground='black')
 
         # make window frameless
         self.dialog.overrideredirect(True)
-        self.dialog_img.overrideredirect(True)
+        #self.dialog_img.overrideredirect(True)
         
         # make window draw over all others
         self.dialog.attributes('-topmost', True)
-        self.dialog_img.attributes('-topmost', True)
+        #self.dialog_img.attributes('-topmost', True)
 
         
         # turn black into transparency
         self.dialog.wm_attributes('-transparentcolor', 'black')
-        self.dialog_img.wm_attributes('-transparentcolor', 'black')
+        #self.dialog_img.wm_attributes('-transparentcolor', 'black')
         
         self.bub_label = tk.Label(self.dialog, bd=0, text="meow :3", font= ('Helvetica 12'), height=1)
-        self.bub = tk.Label(self.dialog_img, bd=0, bg='black', image=self.bub_img)
+        #self.bub = tk.Label(self.dialog_img, bd=0, bg='black', image=self.bub_img)
         self.bub_label.pack()
-        self.bub.pack()
+        #self.bub.pack()
+        
+        self.bubble_width = 100
+        self.bubble_height = 30
+        self.bub_x = self.x + 20
+        self.bub_y = self.y - 40
+        self.offset_x = 0
+        self.offset_y = 0
         
         ### FOOD INPUT SECTION OF THE CODE. INDEPENDENT FROM THE CAT MOVEMENT/DIALOG BUBBLE CODE ###
         
@@ -148,7 +156,7 @@ class Pet():
         
         self.food_label = tk.Label(self.food, bd=0, bg='black')
         
-        self.food_x = self.food_label.winfo_screenwidth() - 1000
+        self.food_x = self.food_label.winfo_screenwidth() - 200
         self.food_y = self.food_label.winfo_screenheight() - 245
         self.food.geometry('200x200+{x}+{y}'.format(x=str(self.food_x), y = str(self.food_y)))
         
@@ -165,16 +173,19 @@ class Pet():
         
         # run self.update() after 0ms when mainloop starts
         self.window.after(0, self.idle)
-        self.window.mainloop()
+        try:
+            self.window.mainloop()
+        except:
+            self.window.quit()
 
     def idle(self):
         # advance frame if 50ms have passed
-        self.bub_x = self.x + 20
-        self.bub_y = self.y - 100
+        self.bub_x = self.x + 20 - self.offset_x
+        self.bub_y = self.y - 40 - self.offset_y
         
         if self.timer == 0:
             self.dialog.deiconify()
-            self.dialog_img.deiconify()
+            #self.dialog_img.deiconify()
            
         if time.time() > self.timestamp + 0.15:
             self.timestamp = time.time()
@@ -182,18 +193,18 @@ class Pet():
             self.frame_index = (self.frame_index + 1) % 7
             self.img = self.ani_idle[self.frame_index]
         
-        self.dialog_img.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
-        self.dialog.geometry('100x70+{x}+{y}'.format(x=str(self.bub_x + 50), y = str(self.bub_y + 30)))
+        #self.dialog_img.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
+        self.dialog.geometry('{width}x{height}+{x}+{y}'.format(width=str(self.bubble_width), height=str(self.bubble_height), x=str(self.bub_x + 30), y = str(self.bub_y + 30)))
         self.label.configure(image=self.img)
         # give window to geometry manager (so it will appear)
         self.label.pack()
         self.bub_label.pack()
-        self.bub.pack()
+        #self.bub.pack()
         
         #idle 
         if self.timer == self.action_time:
             self.dialog.withdraw()
-            self.dialog_img.withdraw()
+            #self.dialog_img.withdraw()
             self.next_function()
         else:
             self.timer += 1
@@ -405,12 +416,20 @@ class Pet():
     
     #Go towards the tuna can and "eat" it for the prompt
     def eat(self):
+        self.timer = 0
         if self.x + 200 > self.food_x and self.x < self.food_x + 200:
-            self.dialog.geometry('100x70+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
-            self.dialog_img.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
-            self.bub_label.config(text=self.input_box.get(), wraplength= 180, height=1)
-            self.eating = False
-            self.next_function()
+            response_str = self.response
+            if len(response_str) > 50:
+                height_size = int(len(response_str) / 50) + 1
+                self.bubble_height = height_size * 30
+            if len(response_str) * 5 > 50 * 5:
+                self.bubble_width = 50 * 5
+            else:
+                self.bubble_width = len(response_str) * 5
+            self.offset_x = int(self.bubble_width / 4)
+            self.offset_y = self.bubble_height - 30
+            self.dialog.geometry('{width}x{height}+{x}+{y}'.format(width=str(self.bubble_width), height=str(self.bubble_height), x=str(self.bub_x), y = str(self.bub_y)))
+            self.window.after(10, self.gen_msg)
         elif self.x < self.food_x:
             self.x += 2
 
@@ -444,6 +463,35 @@ class Pet():
             
             self.window.after(10, self.eat)
     
+    def gen_msg(self):
+        if self.timer != len(self.response):
+            self.bub_x = self.x + 20 - self.offset_x
+            self.bub_y = self.y - 40 - self.offset_y
+            
+            if self.timer == 0:
+                self.dialog.deiconify()
+                #self.dialog_img.deiconify()
+            
+            if time.time() > self.timestamp + 0.15:
+                self.timestamp = time.time()
+                # advance the frame by one, wrap back to 0 at the end
+                self.frame_index = (self.frame_index + 1) % 7
+                self.img = self.ani_idle[self.frame_index]
+            
+            #self.dialog_img.geometry('200x200+{x}+{y}'.format(x=str(self.bub_x), y = str(self.bub_y)))
+            self.dialog.geometry('{width}x{height}+{x}+{y}'.format(width=str(self.bubble_width), height=str(self.bubble_height), x=str(self.bub_x + 30), y = str(self.bub_y + 30)))
+            self.label.configure(image=self.img)
+            # give window to geometry manager (so it will appear)
+            self.bub_label.config(text=self.response[0:self.timer], wraplength=self.bubble_width, font="Arial 12", height=self.bubble_height, width= self.bubble_width)
+            self.timer += 1
+            self.label.pack()
+            self.bub_label.pack()
+            self.window.after(30, self.gen_msg)
+        else:
+            self.eating = False
+            self.action_time = random.randint(300, 800)
+            self.timer = 0
+            self.window.after(10, self.idle)
     
     def is_at_edge_of_screen(self):
         if(self.x <= 0):
@@ -465,15 +513,6 @@ class Pet():
         return int(y)
     
     def next_function(self):
-        # case 2: 
-        #     self.action_time = random.randint(300, 800)
-        #     self.window.after(10, self.fall_down)
-        #     return
-        # case 3: 
-        #     self.action_time = random.randint(300, 800)
-        #     self.window.after(10, self.walk_up)
-        #     return
-        
         #random.randint(0,4)
         if self.eating:
             self.window.after(10, self.eat)
@@ -481,7 +520,6 @@ class Pet():
         
         self.seed_randomizer = random.randint(0,4)
         self.timer = 0
-        print(self.seed_randomizer)
         match self.seed_randomizer:
             case 0: 
                 self.action_time = random.randint(250, 500)
@@ -507,14 +545,14 @@ class Pet():
     def on_click(self):
         #x, y = pyautogui.position()
         #if x >= self.x and y >= self.y and x <= self.x + 125 and y <= self.y + 165:
-            # response = catgptAI.catgptAI.chat(self.input_box.get())
             try: 
-                # self.window.geometry('200x200+{x}+{y}'.format(x=str(self.x), y = str(self.y)))
-                # self.response_screen.config(text="response", wraplength= 180, height=6, padx=-1)
-                # print(self.input_box.get())
-                self.eating = True
+                asyncio.run(self.get_response())
                 print("Starting the Eating process")
             except:
                 print("meow")
-        #self.window.after(100, self.on_click)
+    
+    async def get_response(self):
+        self.response = await catgpt.Catgpt.chat(self.input_box.get())
+        print("Response Ready!")
+        self.eating = True
 Pet()
