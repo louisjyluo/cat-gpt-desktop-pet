@@ -6,9 +6,13 @@ import random
 import catgpt
 import pyautogui
 from tkinter import ttk
+import platform
+import emotion
 
 class Pet():
     def __init__(self):
+        self.model = emotion
+        # self.model.softMaxFit()
         # create a window
         self.window = tk.Tk()
         #self.dialog_img = tk.Toplevel()
@@ -93,7 +97,12 @@ class Pet():
         # make window draw over all others
         self.window.attributes('-topmost', True)
         
-        self.window.wm_attributes('-transparentcolor', 'black')
+        # Platform specific transparent windows
+        os_name = platform.system()
+        if os_name == 'Windows':
+            self.window.wm_attributes('-transparentcolor', 'black')
+        elif os_name == 'Darwin' or os_name == 'Linux':
+            self.window.attributes('-alpha', 1.0)
 
         # create a label as a container for our image
         self.label = tk.Label(self.window, bd=0, bg='black')
@@ -123,8 +132,12 @@ class Pet():
         #self.dialog_img.attributes('-topmost', True)
 
         
-        # turn black into transparency
-        self.dialog.wm_attributes('-transparentcolor', 'black')
+        os_name = platform.system()
+        if os_name == 'Windows':
+            self.dialog.wm_attributes('-transparentcolor', 'black')
+        elif os_name == 'Darwin' or os_name == 'Linux':
+            self.dialog.attributes('-alpha', 1.0)
+        
         #self.dialog_img.wm_attributes('-transparentcolor', 'black')
         
         self.bub_label = tk.Label(self.dialog, bd=0, text="meow :3", font= ('Helvetica 12'), height=1)
@@ -141,8 +154,6 @@ class Pet():
         
         ### FOOD INPUT SECTION OF THE CODE. INDEPENDENT FROM THE CAT MOVEMENT/DIALOG BUBBLE CODE ###
         
-        self.food.wm_attributes('-transparentcolor', 'black')
-        
         self.food.config(highlightbackground='black')
 
         # make window frameless
@@ -150,9 +161,12 @@ class Pet():
 
         # make window draw over all others
         self.food.attributes('-topmost', True)
-
-        # turn black into transparency
-        self.food.wm_attributes('-transparentcolor', 'black')
+        
+        os_name = platform.system()
+        if os_name == 'Windows':
+            self.dialog.wm_attributes('-transparentcolor', 'black')
+        elif os_name == 'Darwin' or os_name == 'Linux':
+            self.dialog.attributes('-alpha', 1.0)
         
         self.food_label = tk.Label(self.food, bd=0, bg='black')
         
@@ -545,14 +559,39 @@ class Pet():
     def on_click(self):
         #x, y = pyautogui.position()
         #if x >= self.x and y >= self.y and x <= self.x + 125 and y <= self.y + 165:
-            try: 
-                asyncio.run(self.get_response())
-                print("Starting the Eating process")
-            except:
-                print("meow")
+            # try: 
+                self.get_response()
+                emotions = self.model.softMaxPrediction(self.response)
+                print(self.emotion_parser(emotions))
+            # except:
+            #     print("error that shouldn't happen :(")
+                
+    def emotion_parser(self, emotions):
+        # 0 = sadness
+        # 1 = love
+        # 2 = joy
+        # 3 = anger
+        # 4 = fear
+        # 5 = surprise
+        for i in emotions:
+            match i:
+                case -1:
+                    print("The Cat feels Nothing...")
+                case 0:
+                    print("The Cat is Sad")
+                case 1:
+                    print("The Cat is Content")
+                case 2:
+                    print("The Cat is Happy")
+                case 3:
+                    print("The Cat is Angry")
+                case 4:
+                    print("The Cat is Scared")
+                case 5:
+                    print("The Cat is Surprised")
     
-    async def get_response(self):
-        self.response = await catgpt.Catgpt.chat(self.input_box.get())
+    def get_response(self):
+        self.response = catgpt.Catgpt.chat(self.input_box.get())
         print("Response Ready!")
         self.eating = True
 Pet()

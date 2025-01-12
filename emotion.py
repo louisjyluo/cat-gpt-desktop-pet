@@ -5,6 +5,28 @@ from numpy.linalg import norm
 from numpy.linalg import _umath_linalg
 import scipy as scp
 from scipy.linalg import solve, inv
+from fun_obj import SoftmaxLoss
+import linear_models
+from optimizers import GradientDescentLineSearch
+import time
+from sklearn.linear_model import LogisticRegression
+import transformer
+import json
+import nltk
+import ssl
+
+# try:
+#     _create_unverified_https_context = ssl._create_unverified_context
+# except AttributeError:
+#     pass
+# else:
+#     ssl._create_default_https_context = _create_unverified_https_context
+
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import sent_tokenize
+# nltk.download("wordnet")
+# nltk.download('punkt_tab')
+# nltk.download("omw-1.4")
 
 # Current Algo idea (ensemble 1 vs All classification)
 # Fit
@@ -141,48 +163,6 @@ class emotionLinearRegression():
             y_hat.append(np.argmin(classifier))
         return y_hat
 
-    def gradDes(self, X, y):
-        n, d = X.shape
-        n, self.d = X.shape
-        learning_rate = 0.008
-        threshold = np.ones(d) * 0.01
-        curr_w = np.ones(d) * 1
-        
-        for i in range(self.max_evals):
-            g = self.getFAndG(X, y, curr_w)
-            curr_w = curr_w - (learning_rate * g)
-            if self.break_yes(g, i, threshold):
-                break
-            print("Currently on iteration:", i)
-        return curr_w
-            
-    
-    def getFAndG(self, X, y, w):
-        # f = 1/2.0 * (w.T @ X.T @ X @ w - 2*y.T @ X @ w + y.T @ y) + 1/2.0 * (w.T @ w)
-        g = X.T @ X @ w - X.T @ y + w
-        return g
-
-    def break_yes(self, g, iteration, threshold):
-        gradient_norm = norm(g, float("inf"))
-        if gradient_norm < threshold:
-            if self.verbose:
-                print(
-                    "Problem solved up to optimality tolerance {:.3f}".format(
-                        threshold
-                    )
-                )
-            return True
-        elif iteration >= self.max_evals:
-            if self.verbose:
-                print(
-                    "Reached maximum number of function evaluations {:.3f}".format(
-                        threshold
-                    )
-                )
-            return True
-        else:
-            return False
-
 def dict():
     training_data = pd.read_csv("data/transformed_text_dict.csv")
     X = training_data['text'].head(400000)
@@ -216,10 +196,10 @@ def dict():
     
 def linear():
     training_data = pd.read_csv("data/transformed_text_linear.csv")
-    X = training_data.drop(['label', 'index'], axis=1).head(2500)
+    X = training_data.drop(['label', 'index'], axis=1).head(200)
     y = training_data['label'].head(2500)
     X_valid = training_data.drop(['label', 'index'], axis=1).tail(500).reset_index(drop=True)
-    y_valid = training_data['label'].tail(500).reset_index(drop=True)
+    y_valid = training_data['label'].tail(100).reset_index(drop=True)
     proc = emotionLinearRegression()
     proc.fit(X, y)
 
@@ -234,7 +214,115 @@ def linear():
     v_err = float(yes) / total * 100
     print("Training Accuracy: ",t_err, "%")
     print("Validation Accuracy: ",v_err, "%")
-    
 
+def softMax():
+    training_data = pd.read_csv("data/transformed_text_linear.csv")
+    X = training_data.drop(['label', 'index'], axis=1).head(4000).to_numpy()
+    y = training_data['label'].head(4000).to_numpy()
+    X_valid = training_data.drop(['label', 'index'], axis=1).tail(1000).reset_index(drop=True).to_numpy()
+    y_valid = training_data['label'].tail(1000).reset_index(drop=True).to_numpy()
+    print("transforming complete")
+    start_time = time.time()
+    fun_obj = SoftmaxLoss()
+    optimizer = GradientDescentLineSearch(max_evals=1000, verbose=True)
+    model = linear_models.MulticlassLinearClassifier(fun_obj, optimizer)
+    model.fit(X, y)
+    
+    fitted_weighting = pd.DataFrame(model.W)
+    fitted_weighting.to_csv("data/softmax_lib_weightings", index=True, index_label="index")
+    print("weightings saved to data")
+    
+    y_hat = model.predict(X)
+    total = len(y)
+    yes = (y_hat == y).sum()
+    t_err = float(yes) / total * 100
+    
+    y_hat = model.predict(X_valid)
+    total = len(y_valid)
+    yes = (y_hat == y_valid).sum()
+    v_err = float(yes) / total * 100
+    print("Training Accuracy: ",t_err, "%")
+    print("Validation Accuracy: ",v_err, "%")
+    print("Total Eval Time:", time.time() - start_time)
+
+def softMaxPreMade():
+    training_data = pd.read_csv("data/transformed_text_linear.csv")
+    X = training_data.drop(['label', 'index'], axis=1).head(8000)
+    y = training_data['label'].head(8000)
+    X_valid = training_data.drop(['label', 'index'], axis=1).tail(2000).reset_index(drop=True)
+    y_valid = training_data['label'].tail(2000).reset_index(drop=True)
+    print("transforming complete")
+    start_time = time.time()
+    softMax = LogisticRegression(multi_class='multinomial', penalty="l2", fit_intercept=False)
+    
+    softMax.fit(X,y)
+    
+    SM_y_hat_train = softMax.predict(X)
+    SM_y_hat_valid = softMax.predict(X_valid)
+    
+    SM_t_error = (SM_y_hat_train == y).sum() / len(y)
+    SM_v_error = (SM_y_hat_valid == y_valid).sum() / len(y_valid)
+
+    print("SoftMax Training Accuracy:", round(SM_t_error, 4))
+    print("SoftMax Validation Accuracy:", round(SM_v_error, 4))
+    print("Total Eval Time:", time.time() - start_time)
+    
+def softMaxFit():
+    training_data = pd.read_csv("data/transformed_text_linear.csv")
+    X = training_data.drop(['label', 'index'], axis=1).head(5000).to_numpy()
+    y = training_data['label'].head(5000).to_numpy()
+    bow_columns = {"bow": list(training_data.drop(['label', 'index'], axis=1).columns.values)}
+    print("transforming complete")
+    fun_obj = SoftmaxLoss()
+    optimizer = GradientDescentLineSearch(max_evals=1000, verbose=True)
+    model = linear_models.MulticlassLinearClassifier(fun_obj, optimizer)
+    model.fit(X, y)
+    
+    fitted_weighting = pd.DataFrame(model.W)
+    fitted_weighting.to_csv("data/softmax_lib_weightings", index=True, index_label="index")
+    print("weightings saved to data")
+    
+    json_object = json.dumps(bow_columns, indent=4)
+    
+    with open("bow_columns.json", "w") as outfile:
+        outfile.write(json_object)
+    
+def softMaxPrediction(data):
+    wnl = WordNetLemmatizer()
+    weightings = pd.read_csv("data/softmax_lib_weightings")
+    w = np.array(weightings["0"])
+    with open('bow_columns.json', 'r') as openfile:
+        bow_columns = json.load(openfile)
+
+    sentences = sent_tokenize(data)
+    print(sentences)
+    dic = {}
+    for i in bow_columns["bow"]:
+        dic[i] = [0] * len(sentences)
+    
+    all_zeros = [1] * len(sentences)
+    for i, sen in enumerate(sentences):
+        sen_p = ""
+        for word in sen.split(" "):
+            word = wnl.lemmatize(word)
+            sen_p = sen_p + " " + word
+        for word in sen_p.split(" "):
+            if word in dic:
+                dic[word][i] += 1
+                all_zeros[i] = 0
+    X_pred = pd.DataFrame.from_dict(dic).to_numpy()
+    y_preds = [0] * len(sentences)
+    n, d = X_pred.shape
+    W = w.reshape(len(w)//6, 6)
+    for i in range(n):
+        if all_zeros[i] == 0:
+            y_preds[i] = np.argmax(X_pred[i] @ W)
+        else:
+            y_preds[i] = -1
+    return y_preds
+    
 #dict()    
-linear() 
+#linear() 
+#softMaxFit()
+#softMaxPreMade()
+#softMaxPrediction(["meow", "hello", "how are you human", "ready to eat some food", "because I am ready to eat"])

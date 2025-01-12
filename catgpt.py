@@ -15,7 +15,7 @@ client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 api_request_counter = 0
 
 class Catgpt():
-    async def chat(msg):
+    def chat(msg):
         global api_request_counter
         api_request_counter += 1
         print(f"API Request Count: {api_request_counter}")
